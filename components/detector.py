@@ -6,7 +6,7 @@ from cs_detector.detection_rules.Generic import *
 from cs_detector.detection_rules.APISpecific import *
 from cs_detector.code_extractor.models import load_model_dict, load_tensor_operations_dict
 from cs_detector.code_extractor.dataframe_detector import load_dataframe_dict
-def rule_check(node, libraries, filename, df_output,models,output_path, refactor):
+def rule_check(node, libraries, filename, df_output,models,output_path):
     #create dictionaries and libraries useful for detection
     dataframe_path = os.path.abspath("../obj_dictionaries/dataframes.csv")
     df_dict = load_dataframe_dict(dataframe_path)
@@ -29,7 +29,6 @@ def rule_check(node, libraries, filename, df_output,models,output_path, refactor
  #   hyper_parameters = hyperparameters_not_explicitly_set(libraries, filename, node,models)
     broadcasting_not_used,broadcasting_not_used_list = broadcasting_feature_not_used(libraries, filename, node,tensor_dict)
     if deterministic:
-        
         df_output.loc[len(df_output)] = deterministic
         save_single_file(filename, deterministic_list,output_path)
     if merge:
@@ -39,16 +38,9 @@ def rule_check(node, libraries, filename, df_output,models,output_path, refactor
         df_output.loc[len(df_output)] = columns_and_data
         save_single_file(filename, columns_and_data_list,output_path)
     if empty:
-        
-        #if refactor: //Qui bisogna mettere funzione per il refactoring
-        
-        
         df_output.loc[len(df_output)] = empty
         save_single_file(filename, empty_list,output_path)
     if nan_equivalence:
-        
-        #if refactor: //Qui bisogna mettere funzione per il refactoring
-        
         df_output.loc[len(df_output)] = nan_equivalence
         save_single_file(filename, nan_equivalence_list,output_path)
     if inplace:
@@ -61,35 +53,18 @@ def rule_check(node, libraries, filename, df_output,models,output_path, refactor
         df_output.loc[len(df_output)] = chain
         save_single_file(filename, chain_list,output_path)
     if dataframe_conversion:
-        
-        #if refactor: //Qui bisogna mettere funzione per il refactoring
-
-        
         df_output.loc[len(df_output)] = dataframe_conversion
         save_single_file(filename, dataframe_conversion_list,output_path)
     if matrix_mul:
-          
-        #if refactor: //Qui bisogna mettere funzione per il refactoring
-        
         df_output.loc[len(df_output)] = matrix_mul
         save_single_file(filename, matrix_mul_list,output_path)
     if gradients:
-        
-        #if refactor: //Qui bisogna mettere funzione per il refactoring
-        
-        
         df_output.loc[len(df_output)] = gradients
         save_single_file(filename, gradients_list,output_path)
     if tensor:
-        
-        #if refactor: //Qui bisogna mettere funzione per il refactoring
-        
         df_output.loc[len(df_output)] = tensor
         save_single_file(filename, tensor_list,output_path)
     if pytorch:
-        
-        #if refactor: //Qui bisogna mettere funzione per il refactoring
-        
         df_output.loc[len(df_output)] = pytorch
         save_single_file(filename,pytorch_list, output_path)
     if unnecessary_iterations:
@@ -111,7 +86,7 @@ def save_single_file(filename, smell_list,output_path):
         to_save.loc[len(to_save)] = smell
     smell_name = smell_list[0]['smell_name']
     to_save.to_csv(f'{output_path}/{smell_name}.csv', index=False)
-def inspect(filename, output_path, refactor):
+def inspect(filename, output_path):
     col = ["filename", "function_name", "smell", "name_smell", "message"]
     to_save = pd.DataFrame(columns=col)
     file_path = os.path.join(filename)
@@ -128,7 +103,7 @@ def inspect(filename, output_path, refactor):
         # Visita i nodi dell'albero dell'AST alla ricerca di funzioni
         for node in ast.walk(tree):
             if isinstance(node, ast.FunctionDef):
-                rule_check(node, libraries, filename, to_save,models,output_path, refactor)
+                rule_check(node, libraries, filename, to_save,models,output_path)
     except SyntaxError as e:
         message = f"Error in file {filename}: {e}"
         raise SyntaxError(message)
