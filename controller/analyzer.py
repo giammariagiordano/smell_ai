@@ -63,7 +63,7 @@ def get_python_files(path):
     return result
 
 
-def analyze_project(project_path, output_path="."):
+def analyze_project(project_path, output_path=".", refactor=False):
     col = ["filename", "function_name", "smell", "name_smell", "message"]
     to_save = pd.DataFrame(columns=col)
     filenames = get_python_files(project_path)
@@ -71,7 +71,7 @@ def analyze_project(project_path, output_path="."):
     for filename in filenames:
         if "tests/" not in filename:  # ignore test files
             try:
-                result = detector.inspect(filename, output_path)
+                result = detector.inspect(filename, output_path, refactor)
                 to_save = to_save.merge(result, how='outer')
             except SyntaxError as e:
                 message = e.msg
@@ -93,7 +93,7 @@ def analyze_project(project_path, output_path="."):
     to_save.to_csv(output_path + "/to_save.csv", index=False, mode='a')
 
 
-def projects_analysis(base_path='../input/projects', output_path='../output/projects_analysis',resume=False):
+def projects_analysis(base_path='../input/projects', output_path='../output/projects_analysis',resume=False,refactor=False):
     start = time.time()
     if not os.path.exists(output_path):
         os.makedirs(output_path)
@@ -125,7 +125,7 @@ def projects_analysis(base_path='../input/projects', output_path='../output/proj
     print(f"Sequential Exec Time completed in: {end - start}")
 
 
-def parallel_projects_analysis(base_path='../input/projects', output_path='../output/projects_analysis', max_workers=5,resume=False):
+def parallel_projects_analysis(base_path='../input/projects', output_path='../output/projects_analysis', max_workers=5,resume=False,refactor=False):
     start = time.time()
     if not os.path.exists(output_path):
         os.makedirs(output_path)
@@ -164,19 +164,20 @@ def main(args):
     resume = True
 
     multiple = args.multiple
+    refactor = args.refactor
     if multiple:
         if not args.resume:
             resume = False
             clean(args.output)
         if args.parallel:
-            parallel_projects_analysis(args.input, args.output, args.max_workers,resume)
+            parallel_projects_analysis(args.input, args.output, args.max_workers,resume, refactor)
         else:
             if not os.path.exists(f"{args.output}"):
                 os.makedirs(f"{args.output}")
-            projects_analysis(args.input, args.output,resume)
+            projects_analysis(args.input, args.output,resume, refactor)
     else:
 
-        analyze_project(args.input, args.output)
+        analyze_project(args.input, args.output, refactor)
     merge_results(args.output, args.output+"/overview")
 
 
@@ -190,6 +191,7 @@ if __name__ == "__main__":
     parser.add_argument("--parallel",default=False, type=bool, help="Enable parallel execution")
     parser.add_argument("--resume", default=False, type=bool, help="Continue previous execution")
     parser.add_argument("--multiple", default=False, type=bool, help="Enable multiple projects analysis")
+    parser.add_argument("--refactor", action = "store_true", help="Enable refactoring of found smells")
     args = parser.parse_args()
     main(args)
 
