@@ -6,11 +6,24 @@ from cs_detector.detection_rules.Generic import *
 from cs_detector.detection_rules.APISpecific import *
 from cs_detector.code_extractor.models import load_model_dict, load_tensor_operations_dict
 from cs_detector.code_extractor.dataframe_detector import load_dataframe_dict
+from cs_detector.refactor_rules.Generic import R_empty_column_misinitialization
 def rule_check(node, libraries, filename, df_output,models,output_path, refactor):
+        
     #create dictionaries and libraries useful for detection
     dataframe_path = os.path.abspath("../obj_dictionaries/dataframes.csv")
+    
+    print("Ottenuto dataframe")
+    
+    print(dataframe_path)
+    
     df_dict = load_dataframe_dict(dataframe_path)
+    
+    print("Caricato dataframe")
+    
     tensor_dict = load_tensor_operations_dict()
+    
+    print("Prima di detection")
+    
     #start detection
     deterministic, deterministic_list = deterministic_algorithm_option_not_used(libraries, filename, node)
     merge, merge_list = merge_api_parameter_not_explicitly_set(libraries, filename, node,df_dict)
@@ -28,6 +41,7 @@ def rule_check(node, libraries, filename, df_output,models,output_path, refactor
     unnecessary_iterations, unnecessary_iterations_list = unnecessary_iteration(libraries, filename, node, df_dict)
  #   hyper_parameters = hyperparameters_not_explicitly_set(libraries, filename, node,models)
     broadcasting_not_used,broadcasting_not_used_list = broadcasting_feature_not_used(libraries, filename, node,tensor_dict)
+        
     if deterministic:
         df_output.loc[len(df_output)] = deterministic
         save_single_file(filename, deterministic_list,output_path)
@@ -40,6 +54,13 @@ def rule_check(node, libraries, filename, df_output,models,output_path, refactor
     if empty:
         
         #if refactor: //Qui bisogna mettere funzione per il refactoring
+        
+        print("PRIMA REFACTOR")
+        
+        if refactor:
+            R_empty_column_misinitialization(libraries, filename, node)
+        
+        print("DOPO REFACTOR")
         
         df_output.loc[len(df_output)] = empty
         save_single_file(filename, empty_list,output_path)
@@ -96,6 +117,9 @@ def rule_check(node, libraries, filename, df_output,models,output_path, refactor
         save_single_file(filename, broadcasting_not_used_list,output_path)
  #   if hyper_parameters:
   #      df_output.loc[len(df_output)] = hyper_parameters
+  
+    print("RESTITUISCO OUTPUT")
+
     return df_output
 def save_single_file(filename, smell_list,output_path):
     cols = ["filename", "function_name", "smell_name", "line"]
@@ -110,6 +134,7 @@ def save_single_file(filename, smell_list,output_path):
 def inspect(filename, output_path, refactor):
     col = ["filename", "function_name", "smell", "name_smell", "message"]
     to_save = pd.DataFrame(columns=col)
+        
     file_path = os.path.join(filename)
     try:
         with open(file_path, "rb") as file:
@@ -118,6 +143,7 @@ def inspect(filename, output_path, refactor):
         message = f"Error in file {filename}: {e}"
         raise FileNotFoundError(message)
     try:
+        
         tree = ast.parse(source)
         libraries = extract_libraries(tree)
         models = load_model_dict()
@@ -125,6 +151,7 @@ def inspect(filename, output_path, refactor):
         for node in ast.walk(tree):
             if isinstance(node, ast.FunctionDef):
                 rule_check(node, libraries, filename, to_save,models,output_path, refactor)
+                
     except SyntaxError as e:
         message = f"Error in file {filename}: {e}"
         raise SyntaxError(message)

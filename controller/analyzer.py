@@ -66,8 +66,11 @@ def get_python_files(path):
 def analyze_project(project_path, output_path=".", refactor=False):
     col = ["filename", "function_name", "smell", "name_smell", "message"]
     to_save = pd.DataFrame(columns=col)
+    
+    print("PATH OTTENUTO: " +project_path)
+    
     filenames = get_python_files(project_path)
-
+    
     for filename in filenames:
         if "tests/" not in filename:  # ignore test files
             try:
@@ -118,7 +121,7 @@ def projects_analysis(base_path='../input/projects', output_path='../output/proj
             os.makedirs(f"{output_path}/{dirname}")
         print(f"Analyzing {dirname}...")
 
-        analyze_project(new_path, f"{output_path}/{dirname}")
+        analyze_project(new_path, f"{output_path}/{dirname}", refactor)
         print(f"{dirname} analyzed successfully.")
         execution_log.write(dirname + "\n")
     end = time.time()
