@@ -1,3 +1,5 @@
+import os
+import astunparse
 import ast
 import re
 from ..code_extractor.models import check_model_method
@@ -8,7 +10,29 @@ from ..code_extractor.variables import search_variable_definition
 
 test_libraries = ["pytest", "robot", "unittest", "doctest", "nose2", "testify", "pytest-cov", "pytest-xdist"]
 
-def R_empty_column_misinitialization(libraries, filename, fun_node, df_dict):
+def get_lines_of_code(node):
+    function_name = node.name
+
+    function_body = ast.unparse(node.body).strip()
+    lines = function_body.split('\n')
+    return function_name, lines
+
+
+def filePatch(filename, source, lineno, oldCode, newCode):
+    #Aprire file, leggere riga lineno, con una funzione trova l'inizio del vecchio codice e ci sostituisce il nuovo
+    #print("dentro filePatch")
+    
+    file_path = os.path.join(filename)
+    out = open(file_path, 'w')
+
+    line = source[lineno - 1]
+    line = line.replace(oldCode, newCode)
+    source[lineno - 1] = line             
+    
+    out.write(''.join(source))
+    out.close()
+
+def R_empty_column_misinitialization(source, libraries, filename, fun_node, df_dict):
     if [x for x in libraries if x in test_libraries]:
         return [], []
     smell_instance_list = []
@@ -25,27 +49,44 @@ def R_empty_column_misinitialization(libraries, filename, fun_node, df_dict):
         # for each assignment of a variable
         for node in ast.walk(fun_node):
             if isinstance(node, ast.Assign):
+                target = node.targets[0]
                 # check if the variable is a dataframe
-                if hasattr(node.targets[0], 'id'):
-                    if node.targets[0].id in variables:
+                if isinstance(target, ast.Subscript) and hasattr(target.value, 'id'):
+                    #print("SUPERATO CONTROLLO")
+                #if hasattr(node.targets[0], 'id'):
+                    #print(ast.dump(node))
+                    if target.value.id in variables:
+                    #if node.targets[0].id in variables:
                         # check if the line is an assignment of a column of the dataframe
-                        if hasattr(node.targets[0], 'slice'):
-                            
-                            print("CONTROLLO ASSEGNAMENTO: " + node.targets[0])
-                            
+                        #print("Trovata variabile in dataframe")
+                        #print(ast.dump(node.targets[0]))
+                        #if isinstance(node.targets[0], ast.Subscript):
                             # select a line where uses to define a column df.[*] = *
-                            pattern = node.targets[0].id + '\[.*\]'
+                        #pattern = re.escape(target.value.id) + r'\[.*\]'
+                        pattern = target.value.id + '\[.*\]'
+                        #print("Trovata colonna appropriata per lo smell")
+                        #print(node.lineno)
                             # check if the line is an assignment of the value is 0 or ''
-                            if re.match(pattern, lines[node.lineno - 1]):
-                                if lines[node.lineno - 1].split('=')[1].strip() in empty_values:
-                                    new_smell = {'filename': filename, 'function_name': function_name,
+                        if re.match(pattern, ast.unparse(node).strip()):
+                            if ast.unparse(node).strip().split('=')[1].strip() in empty_values:
+                                new_smell = {'filename': filename, 'function_name': function_name,
                                                     'smell_name': 'empty_column_misinitialization',
                                                     'line': node.lineno}
-                                    smell_instance_list.append(new_smell)
-                                    number_of_apply += 1
-                                    
-                                    #Qui faccio il refactor
-                                    
+                                smell_instance_list.append(new_smell)
+                                number_of_apply += 1
+                                
+                                #print(ast.dump(node))
+                                oldCode = astunparse.unparse(node.value).strip()
+                                print(oldCode)
+                                #print(astunparse.unparse(node.left).strip())
+                                #node.targets[1].value = 'np.nan()'
+                                #print(ast.dump(node))
+                                newCode = 'np.nan()'
+                                print(newCode)
+                                
+                                filePatch(filename, source, node.lineno, oldCode, newCode)
+
+                            
 
         if number_of_apply > 0:
             message = "If they use zeros or empty strings to initialize a new empty column in Pandas" \
@@ -58,7 +99,7 @@ def R_empty_column_misinitialization(libraries, filename, fun_node, df_dict):
     return [], []
 
 
-def nan_equivalence_comparison_misused(libraries, filename, fun_node):
+def R_nan_equivalence_comparison_misused(source, libraries, filename, fun_node):
     library_name = ""
     if [x for x in libraries if x in test_libraries]:
         return [], []
@@ -86,6 +127,20 @@ def nan_equivalence_comparison_misused(libraries, filename, fun_node):
                                             'line': node.lineno}
                             smell_instance_list.append(new_smell)
                             number_of_nan_equivalences += 1
+                            
+                            compName = astunparse.unparse(node.left).strip()
+                            
+                            #print(ast.dump(node))
+                            oldCode = astunparse.unparse(node).strip()[1:-1]
+                            print(oldCode)
+                            #print(astunparse.unparse(node.left).strip())
+                            #node.func.attr = 'net'
+                            #print(ast.dump(node))
+                            newCode = "np.isnan(" + compName + ")"
+                            print(newCode)
+                            
+                            filePatch(filename, source, node.lineno, oldCode, newCode)
+                            
         if number_of_nan_equivalences > 0:
             message = "NaN equivalence comparison misused"
             name_smell = "nan_equivalence_comparison_misused"

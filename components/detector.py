@@ -6,9 +6,12 @@ from cs_detector.detection_rules.Generic import *
 from cs_detector.detection_rules.APISpecific import *
 from cs_detector.code_extractor.models import load_model_dict, load_tensor_operations_dict
 from cs_detector.code_extractor.dataframe_detector import load_dataframe_dict
-from cs_detector.refactor_rules.Generic import R_empty_column_misinitialization
-def rule_check(node, libraries, filename, df_output,models,output_path, refactor):
+from cs_detector.refactor_rules.APISpecific import R_dataframe_conversion_api_misused, R_matrix_multiplication_api_misused, R_gradients_not_cleared_before_backward_propagation, R_tensor_array_not_used, R_pytorch_call_method_misused
+from cs_detector.refactor_rules.Generic import R_empty_column_misinitialization, R_nan_equivalence_comparison_misused
+def rule_check(source, node, libraries, filename, df_output,models,output_path, refactor):
         
+    print("Entrato in rule check")    
+    
     #create dictionaries and libraries useful for detection
     dataframe_path = os.path.abspath("../obj_dictionaries/dataframes.csv")
     
@@ -55,18 +58,19 @@ def rule_check(node, libraries, filename, df_output,models,output_path, refactor
         
         #if refactor: //Qui bisogna mettere funzione per il refactoring
         
-        print("PRIMA REFACTOR")
+       # print("PRIMA REFACTOR")
         
         if refactor:
-            R_empty_column_misinitialization(libraries, filename, node)
+            R_empty_column_misinitialization(source, libraries, filename, node, df_dict)
         
-        print("DOPO REFACTOR")
+        #print("DOPO REFACTOR")
         
         df_output.loc[len(df_output)] = empty
         save_single_file(filename, empty_list,output_path)
     if nan_equivalence:
         
-        #if refactor: //Qui bisogna mettere funzione per il refactoring
+        if refactor: #//Qui bisogna mettere funzione per il refactoring
+            R_nan_equivalence_comparison_misused(source, libraries, filename, node)
         
         df_output.loc[len(df_output)] = nan_equivalence
         save_single_file(filename, nan_equivalence_list,output_path)
@@ -81,31 +85,40 @@ def rule_check(node, libraries, filename, df_output,models,output_path, refactor
         save_single_file(filename, chain_list,output_path)
     if dataframe_conversion:
         
-        #if refactor: //Qui bisogna mettere funzione per il refactoring
-        
+        if refactor: #//Qui bisogna mettere funzione per il refactoring
+            
+            R_dataframe_conversion_api_misused(source, libraries, filename, node, df_dict)
+                
         df_output.loc[len(df_output)] = dataframe_conversion
         save_single_file(filename, dataframe_conversion_list,output_path)
     if matrix_mul:
         
-        #if refactor: //Qui bisogna mettere funzione per il refactoring
+        if refactor: #//Qui bisogna mettere funzione per il refactoring
+        
+            R_matrix_multiplication_api_misused(source, libraries, filename, node)
+
         
         df_output.loc[len(df_output)] = matrix_mul
         save_single_file(filename, matrix_mul_list,output_path)
     if gradients:
         
-        #if refactor: //Qui bisogna mettere funzione per il refactoring
+        if refactor: #//Qui bisogna mettere funzione per il refactoring
+        
+            R_gradients_not_cleared_before_backward_propagation(source, libraries, filename, node)
         
         df_output.loc[len(df_output)] = gradients
         save_single_file(filename, gradients_list,output_path)
     if tensor:
         
-        #if refactor: //Qui bisogna mettere funzione per il refactoring
+        if refactor: #Qui bisogna mettere funzione per il refactoring
+            R_tensor_array_not_used(source, libraries, filename, node)
         
         df_output.loc[len(df_output)] = tensor
         save_single_file(filename, tensor_list,output_path)
     if pytorch:
         
-        #if refactor: //Qui bisogna mettere funzione per il refactoring
+        if refactor: #//Qui bisogna mettere funzione per il refactoring
+            R_pytorch_call_method_misused(source, libraries, filename, node)
         
         df_output.loc[len(df_output)] = pytorch
         save_single_file(filename,pytorch_list, output_path)
@@ -132,25 +145,33 @@ def save_single_file(filename, smell_list,output_path):
     smell_name = smell_list[0]['smell_name']
     to_save.to_csv(f'{output_path}/{smell_name}.csv', index=False)
 def inspect(filename, output_path, refactor):
+    
+    print("Entrato in inspect")
+    
     col = ["filename", "function_name", "smell", "name_smell", "message"]
     to_save = pd.DataFrame(columns=col)
         
+    print("Prima di file path")    
+    
     file_path = os.path.join(filename)
     try:
-        with open(file_path, "rb") as file:
-            source = file.read()
+        with open(file_path, "r") as file:
+            source = file.readlines()
     except FileNotFoundError as e:
         message = f"Error in file {filename}: {e}"
         raise FileNotFoundError(message)
     try:
         
-        tree = ast.parse(source)
+        print("Prima di tree")
+        
+        sourceJoined = ''.join(source)
+        tree = ast.parse(sourceJoined)
         libraries = extract_libraries(tree)
         models = load_model_dict()
         # Visita i nodi dell'albero dell'AST alla ricerca di funzioni
         for node in ast.walk(tree):
             if isinstance(node, ast.FunctionDef):
-                rule_check(node, libraries, filename, to_save,models,output_path, refactor)
+                rule_check(source, node, libraries, filename, to_save,models,output_path, refactor) #Modifica, gli ho passato il file
                 
     except SyntaxError as e:
         message = f"Error in file {filename}: {e}"

@@ -20,7 +20,7 @@ def dataframe_conversion_api_misused_example():
     c = [np.nan, 0.5, 0.5, np.nan, 0.5, 0.5, np.nan]
     df = pd.DataFrame({'A': a, 'B': b, 'C': c}, index=index)
     df = df.rename_axis('ID')
-    arr = df.values
+    arr = df.to_numpy()
 
 
 def matrix_mul_example():
@@ -120,13 +120,16 @@ def nan_equivalence_example():
     import numpy as np
     df = pd.DataFrame([1, None, 3])
     df_is_nan = df == np.nan
-
+    
+def nan_equivalence_example2():
+    if dit[1] is np.nan:
+        test = False
+    
 def empty_example():
     df = pd.DataFrame([])
     df['new_col_int'] = 0
     df['new_col_str'] = ''
-
-
+    
 
 def merge_api_parameter_not_explicitly_set_example():
     df1 = pd.DataFrame({'key': ['foo', 'bar', 'baz', 'foo'],
@@ -139,7 +142,11 @@ def merge_api_parameter_not_explicitly_set_example():
 def columns_and_datatype_not_explicitly_set_example():
     df = pd.read_csv('data.csv')
 
-
+def gradient_not_cleared_before_backward_propagation():
+    for count in range(test):
+        ott.zero_grad()
+        loss.backward()
+        ott.step()
 
 
 def deterministic_example():
@@ -156,11 +163,15 @@ def pytorch_call_method_misused_example(self, x):
     x = self.fc3(x)
     return x
 
+def pytorch_call_method_misused_example2():
+    loss = self.net(ab, c) + self.net(d, e)
+
+
 
 def tensor_example(n):
     a = tf.constant(1)
     b = tf.constant(1)
-    c = tf.constant([1, 1])
+    c = tf.TensorArray()([1, 1])
     c = tf.TensorArray(tf.int32, n)
     c = c.write(0, a)
     c = c.write(1, b)
@@ -173,7 +184,7 @@ def tensor_example(n):
 def matrix_mul_example():
     a = [[1, 0], [0, 1]]
     b = [[4, 1], [2, 2]]
-    np.dot(a, b)
+    np.matmul(a, b)
 
 
 def dataframe_conversion_api_misused_example():
@@ -183,7 +194,7 @@ def dataframe_conversion_api_misused_example():
     c = [np.nan, 0.5, 0.5, np.nan, 0.5, 0.5, np.nan]
     df = pd.DataFrame({'A': a, 'B': b, 'C': c}, index=index)
     df = df.rename_axis('ID')
-    arr = df.values
+    arr = df.to_numpy()
 
 
 def chain_index_example():

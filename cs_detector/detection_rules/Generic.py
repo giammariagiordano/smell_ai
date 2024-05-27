@@ -161,21 +161,31 @@ def empty_column_misinitialization(libraries, filename, fun_node, df_dict):
         # for each assignment of a variable
         for node in ast.walk(fun_node):
             if isinstance(node, ast.Assign):
+                target = node.targets[0]
                 # check if the variable is a dataframe
-                if hasattr(node.targets[0], 'id'):
-                    if node.targets[0].id in variables:
+                if isinstance(target, ast.Subscript) and hasattr(target.value, 'id'):
+                    #print("SUPERATO CONTROLLO")
+                #if hasattr(node.targets[0], 'id'):
+                    #print(ast.dump(node))
+                    if target.value.id in variables:
+                    #if node.targets[0].id in variables:
                         # check if the line is an assignment of a column of the dataframe
-                        if hasattr(node.targets[0], 'slice'):
+                        #print("Trovata variabile in dataframe")
+                        #print(ast.dump(node.targets[0]))
+                        #if isinstance(node.targets[0], ast.Subscript):
                             # select a line where uses to define a column df.[*] = *
-                            pattern = node.targets[0].id + '\[.*\]'
+                        #pattern = re.escape(target.value.id) + r'\[.*\]'
+                        pattern = target.value.id + '\[.*\]'
+                        #print("Trovata colonna appropriata per lo smell")
+                        #print(node.lineno)
                             # check if the line is an assignment of the value is 0 or ''
-                            if re.match(pattern, lines[node.lineno - 1]):
-                                if lines[node.lineno - 1].split('=')[1].strip() in empty_values:
-                                    new_smell = {'filename': filename, 'function_name': function_name,
+                        if re.match(pattern, ast.unparse(node).strip()):
+                            if ast.unparse(node).strip().split('=')[1].strip() in empty_values:
+                                new_smell = {'filename': filename, 'function_name': function_name,
                                                     'smell_name': 'empty_column_misinitialization',
                                                     'line': node.lineno}
-                                    smell_instance_list.append(new_smell)
-                                    number_of_apply += 1
+                                smell_instance_list.append(new_smell)
+                                number_of_apply += 1
 
         if number_of_apply > 0:
             message = "If they use zeros or empty strings to initialize a new empty column in Pandas" \

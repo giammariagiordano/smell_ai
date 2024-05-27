@@ -1,5 +1,7 @@
 import ast
+import astunparse
 import re
+import os
 
 from cs_detector.code_extractor.dataframe_detector import dataframe_check
 from cs_detector.code_extractor.variables import search_variable_definition
@@ -7,7 +9,36 @@ from cs_detector.code_extractor.libraries import extract_library_as_name
 
 test_libraries = ["pytest", "robot", "unittest", "doctest", "nose2", "testify", "pytest-cov", "pytest-xdist"]
 
-def dataframe_conversion_api_misused(libraries, filename, fun_node, df_dict):
+def filePatch(filename, source, lineno, oldCode, newCode):
+    #Aprire file, leggere riga lineno, con una funzione trova l'inizio del vecchio codice e ci sostituisce il nuovo
+    #print("dentro filePatch")
+    
+    file_path = os.path.join(filename)
+    out = open(file_path, 'w')
+
+    line = source[lineno - 1]
+    line = line.replace(oldCode, newCode)
+    source[lineno - 1] = line             
+    
+    out.write(''.join(source))
+    out.close()
+    
+def addLine(filename, source, lineno, newCode):
+    file_path = os.path.join(filename)
+    out = open(file_path, 'w')
+
+    line = source[lineno]
+    #print("RIGA CHE VOGLIO COPIARE:" + line)
+        
+    line = line.replace(line.strip(), newCode) 
+    #print("NUOVA RIGA: " + line)     
+    source.insert(lineno, line)
+        
+    out.write(''.join(source))
+    out.close()
+            
+
+def R_dataframe_conversion_api_misused(source, libraries, filename, fun_node, df_dict):
     if [x for x in libraries if 'pandas' in x]:
         function_name = fun_node.name
         variables = dataframe_check(fun_node, libraries, df_dict)
@@ -21,11 +52,27 @@ def dataframe_conversion_api_misused(libraries, filename, fun_node, df_dict):
                             if hasattr(node, 'value'):
                                 if hasattr(node.value, 'id'):
                                     if node.value.id in variables:
+                                        
+                                        #Confermato smell, lo aggiunge a lista
                                         new_smell = {'filename': filename, 'function_name': function_name,
                                                      'smell_name': 'dataframe_conversion_api_misused',
                                                      'line': node.lineno}
                                         smell_instance_list.append(new_smell)
                                         number_of_apply += 1
+                                        
+                                        #Dopo averlo confermato, se il flag di refactor è attivo, fa refactoring ed aggiunge a lista di refactor
+                                        
+                                        #Use df.to_numpy() in Pandas instead of df.values() for transform a DataFrame to a NumPy array.
+                                       # print(ast.dump(node))
+                                        oldCode = astunparse.unparse(node).strip()
+                                       # print(oldCode)
+                                        node.attr = 'to_numpy'
+                                        #print(ast.dump(node))
+                                        newCode = astunparse.unparse(node).strip() + '()'
+                                        #print(newCode)
+                                        
+                                        filePatch(filename, source, node.lineno, oldCode, newCode)
+                                        
         if number_of_apply > 0:
             message = "Please consider to use numpy instead values to convert dataframe. The function 'values' is deprecated." \
                   "The value return of this function is unclear."
@@ -37,7 +84,7 @@ def dataframe_conversion_api_misused(libraries, filename, fun_node, df_dict):
 
 
 
-def matrix_multiplication_api_misused(libraries, filename, fun_node):
+def R_matrix_multiplication_api_misused(source, libraries, filename, fun_node):
     number_of_apply = 0
     library_name = ""
     function_name = ""
@@ -84,6 +131,16 @@ def matrix_multiplication_api_misused(libraries, filename, fun_node):
                                                                 'line': node.lineno}
                                                 smell_instance_list.append(new_smell)
                                                 number_of_apply += 1
+                                                
+                                               # print(ast.dump(node))
+                                                oldCode = astunparse.unparse(node).strip()
+                                                #print(oldCode)
+                                                node.func.attr = 'matmul'
+                                                #print(ast.dump(node))
+                                                newCode = astunparse.unparse(node).strip()
+                                                #print(newCode)
+                                        
+                                                filePatch(filename, source, node.lineno, oldCode, newCode)
 
                                             else:
                                                 for arg in arguments:
@@ -100,6 +157,16 @@ def matrix_multiplication_api_misused(libraries, filename, fun_node):
                                                                     'line': node.lineno}
                                                     smell_instance_list.append(new_smell)
                                                     number_of_apply += 1
+                                                    
+                                                    #print(ast.dump(node))
+                                                    oldCode = astunparse.unparse(node).strip()
+                                                    #print(oldCode)
+                                                    node.func.attr = 'matmul'
+                                                    #print(ast.dump(node))
+                                                    newCode = astunparse.unparse(node).strip()
+                                                    #print(newCode)
+                                        
+                                                    filePatch(filename, source, node.lineno, oldCode, newCode)
 
         if number_of_apply > 0:
             message = "Please consider to use np.matmul to multiply matrix. The function dot() not return a scalar value, " \
@@ -111,7 +178,7 @@ def matrix_multiplication_api_misused(libraries, filename, fun_node):
     return [], []
 
 
-def gradients_not_cleared_before_backward_propagation(libraries, filename, fun_node):
+def R_gradients_not_cleared_before_backward_propagation(source, libraries, filename, fun_node):
     library_name = ""
     if [x for x in libraries if x in test_libraries]:
         return [], []
@@ -125,6 +192,7 @@ def gradients_not_cleared_before_backward_propagation(libraries, filename, fun_n
         for node in ast.walk(fun_node):
             if isinstance(node, ast.For) or isinstance(node,ast.While):
                 zero_grad_called = False
+                backwardFound = False
                 for node2 in ast.walk(node):
                     if isinstance(node2, ast.Call):
                         if hasattr(node2, 'func'):
@@ -138,7 +206,16 @@ def gradients_not_cleared_before_backward_propagation(libraries, filename, fun_n
                                                         'line': node2.lineno}
                                         smell_instance_list.append(new_smell)
                                         number_of_apply += 1
-
+                                        backwardFound = True
+                                        backwardLineNo = node2.lineno
+                                        
+                                if node2.func.attr == "step":
+                                    if(backwardFound):
+                                        newNode = node2
+                                        newNode.func.attr = 'zero_grad'
+                                        
+                                        #optName = node2.func.value.id
+                                        addLine(filename, source, backwardLineNo - 1, astunparse.unparse(newNode).strip())
         if number_of_apply > 0:
             message = "Please consider to use zero_grad() before backward()."
             name_smell = "gradients_not_cleared_before_backward_propagation"
@@ -149,7 +226,7 @@ def gradients_not_cleared_before_backward_propagation(libraries, filename, fun_n
 
 
 
-def tensor_array_not_used(libraries, filename, fun_node):
+def R_tensor_array_not_used(source, libraries, filename, fun_node):
     library_name = ""
     if [x for x in libraries if x in test_libraries]:
         return [], []
@@ -175,6 +252,16 @@ def tensor_array_not_used(libraries, filename, fun_node):
                                                         'line': node.lineno}
                                         smell_instance_list.append(new_smell)
                                         number_of_apply += 1
+                                        
+                                        #print(ast.dump(node))
+                                        oldCode = astunparse.unparse(node).strip()
+                                        #print(oldCode)
+                                        node.func.attr = 'TensorArray()'
+                                        #print(ast.dump(node))
+                                        newCode = astunparse.unparse(node).strip()
+                                        #print(newCode)
+                                        
+                                        filePatch(filename, source, node.lineno, oldCode, newCode)
         if number_of_apply > 0:
             message = "If the developer initializes an array using tf.constant() and tries to assign a new value to " \
                       "it in the loop to keep it growing, the code will run into an error." \
@@ -188,7 +275,7 @@ def tensor_array_not_used(libraries, filename, fun_node):
 
 
 
-def pytorch_call_method_misused(libraries, filename, fun_node):
+def R_pytorch_call_method_misused(source, libraries, filename, fun_node):
     if [x for x in libraries if x in test_libraries]:
         return [], []
     if [x for x in libraries if 'torch' in x]:
@@ -207,6 +294,18 @@ def pytorch_call_method_misused(libraries, filename, fun_node):
                                             'line': node.lineno}
                             smell_instance_list.append(new_smell)
                             number_of_forward += 1
+                            
+                            #print(ast.dump(node))
+                            oldCode = astunparse.unparse(node).strip()
+                            #print(oldCode)
+                            node.func.attr = 'net'
+                            #print(ast.dump(node))
+                            newCode = astunparse.unparse(node).strip()
+                            #print(newCode)
+                            
+                            filePatch(filename, source, node.lineno, oldCode, newCode)
+
+                            
         if number_of_forward > 0:
             message = "is recommended to use self.net()"
             name_smell = "pytorch_call_method_misused"

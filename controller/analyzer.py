@@ -71,9 +71,16 @@ def analyze_project(project_path, output_path=".", refactor=False):
     
     filenames = get_python_files(project_path)
     
+    
+    
+    print("Ottenuti filename")
+    
+    print(filenames)
+    
     for filename in filenames:
         if "tests/" not in filename:  # ignore test files
             try:
+                print("Prima di detector inspect")
                 result = detector.inspect(filename, output_path, refactor)
                 to_save = to_save.merge(result, how='outer')
             except SyntaxError as e:
