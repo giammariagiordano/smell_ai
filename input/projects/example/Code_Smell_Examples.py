@@ -1,5 +1,5 @@
-import pandas as pd
 import numpy as np
+import pandas as pd
 import tensorflow as tf
 import torch
 import torch.nn.functional as F
@@ -20,7 +20,7 @@ def dataframe_conversion_api_misused_example():
     c = [np.nan, 0.5, 0.5, np.nan, 0.5, 0.5, np.nan]
     df = pd.DataFrame({'A': a, 'B': b, 'C': c}, index=index)
     df = df.rename_axis('ID')
-    arr = df.to_numpy()
+    arr = df.values
 
 
 def matrix_mul_example():
@@ -144,7 +144,6 @@ def columns_and_datatype_not_explicitly_set_example():
 
 def gradient_not_cleared_before_backward_propagation():
     for count in range(test):
-        ott.zero_grad()
         loss.backward()
         ott.step()
 
@@ -164,14 +163,14 @@ def pytorch_call_method_misused_example(self, x):
     return x
 
 def pytorch_call_method_misused_example2():
-    loss = self.net(ab, c) + self.net(d, e)
+    loss = self.forward(ab, c) + self.forward(d, e)
 
 
 
 def tensor_example(n):
     a = tf.constant(1)
     b = tf.constant(1)
-    c = tf.TensorArray()([1, 1])
+    c = tf.constant([1, 1])
     c = tf.TensorArray(tf.int32, n)
     c = c.write(0, a)
     c = c.write(1, b)
@@ -184,7 +183,7 @@ def tensor_example(n):
 def matrix_mul_example():
     a = [[1, 0], [0, 1]]
     b = [[4, 1], [2, 2]]
-    np.matmul(a, b)
+    np.dot(a, b)
 
 
 def dataframe_conversion_api_misused_example():
@@ -194,7 +193,7 @@ def dataframe_conversion_api_misused_example():
     c = [np.nan, 0.5, 0.5, np.nan, 0.5, 0.5, np.nan]
     df = pd.DataFrame({'A': a, 'B': b, 'C': c}, index=index)
     df = df.rename_axis('ID')
-    arr = df.to_numpy()
+    arr = df.values
 
 
 def chain_index_example():
