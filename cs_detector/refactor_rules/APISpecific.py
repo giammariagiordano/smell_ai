@@ -1,11 +1,12 @@
 import ast
-import astunparse
-import re
 import os
+import re
+
+import astunparse
 
 from cs_detector.code_extractor.dataframe_detector import dataframe_check
-from cs_detector.code_extractor.variables import search_variable_definition
 from cs_detector.code_extractor.libraries import extract_library_as_name
+from cs_detector.code_extractor.variables import search_variable_definition
 
 test_libraries = ["pytest", "robot", "unittest", "doctest", "nose2", "testify", "pytest-cov", "pytest-xdist"]
 
@@ -30,7 +31,7 @@ def addLine(filename, source, lineno, newCode):
     line = source[lineno]
     #print("RIGA CHE VOGLIO COPIARE:" + line)
         
-    line = line.replace(line.strip(), newCode) 
+    line = line.replace(line.strip(), newCode.strip()) 
     #print("NUOVA RIGA: " + line)     
     source.insert(lineno, line)
         
@@ -207,7 +208,7 @@ def R_gradients_not_cleared_before_backward_propagation(source, libraries, filen
                                         smell_instance_list.append(new_smell)
                                         number_of_apply += 1
                                         backwardFound = True
-                                        backwardLineNo = node2.lineno
+                                        backwardNode = node2
                                         
                                 if node2.func.attr == "step":
                                     if(backwardFound):
@@ -215,7 +216,8 @@ def R_gradients_not_cleared_before_backward_propagation(source, libraries, filen
                                         newNode.func.attr = 'zero_grad'
                                         
                                         #optName = node2.func.value.id
-                                        addLine(filename, source, backwardLineNo - 1, astunparse.unparse(newNode).strip())
+                                        addLine(filename, source, backwardNode.lineno - 1, astunparse.unparse(newNode))
+        
         if number_of_apply > 0:
             message = "Please consider to use zero_grad() before backward()."
             name_smell = "gradients_not_cleared_before_backward_propagation"
@@ -223,6 +225,7 @@ def R_gradients_not_cleared_before_backward_propagation(source, libraries, filen
             return to_return, smell_instance_list
         return [], []
     return [], []
+
 
 
 
@@ -256,12 +259,13 @@ def R_tensor_array_not_used(source, libraries, filename, fun_node):
                                         #print(ast.dump(node))
                                         oldCode = astunparse.unparse(node).strip()
                                         #print(oldCode)
-                                        node.func.attr = 'TensorArray()'
+                                        node.func.attr = 'TensorArray'
                                         #print(ast.dump(node))
                                         newCode = astunparse.unparse(node).strip()
                                         #print(newCode)
                                         
                                         filePatch(filename, source, node.lineno, oldCode, newCode)
+                                        
         if number_of_apply > 0:
             message = "If the developer initializes an array using tf.constant() and tries to assign a new value to " \
                       "it in the loop to keep it growing, the code will run into an error." \
