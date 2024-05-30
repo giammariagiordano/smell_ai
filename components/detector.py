@@ -217,10 +217,10 @@ def inspect(filename, output_path, refactor):
 def save_refactor_single_file(filename, smell_list,output_path):
     cols = ["filename", "function_name", "smell_name", "line"]
     if os.path.exists(f'{output_path}/ R_{smell_list[0]["smell_name"]}.csv'):
-        to_save = pd.read_csv(f'{output_path}/{smell_list[0]["smell_name"]}.csv')
+        to_save = pd.read_csv(f'{output_path}/ R_{smell_list[0]["smell_name"]}.csv')
     else:
         to_save = pd.DataFrame(columns=cols)
     for smell in smell_list:
         to_save.loc[len(to_save)] = smell
     smell_name = "R_" + smell_list[0]['smell_name']
-    to_save.to_csv(f'{output_path}/{smell_name}.csv', index=False)
+    to_save.to_csv(f'{output_path}/Ref/{smell_name}.csv', index=False)

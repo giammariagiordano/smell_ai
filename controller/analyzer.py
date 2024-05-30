@@ -1,9 +1,12 @@
-import os
-import pandas as pd
-from concurrent.futures import ThreadPoolExecutor
-import time
-from components import detector
 import argparse
+import os
+import time
+from concurrent.futures import ThreadPoolExecutor
+from functools import reduce
+
+import pandas as pd
+
+from components import detector
 
 
 def merge_results(input_dir="../output", output_dir="../general_output"):
@@ -70,8 +73,9 @@ def analyze_project(project_path, output_path=".", refactor=False):
     print("PATH OTTENUTO: " +project_path)
     
     filenames = get_python_files(project_path)
-    
-    
+    if refactor:
+        if not os.path.exists(output_path + "\Ref"):
+            os.makedirs(output_path + "\Ref")
     
     print("Ottenuti filename")
     
@@ -101,7 +105,10 @@ def analyze_project(project_path, output_path=".", refactor=False):
                 continue
 
     to_save.to_csv(output_path + "/to_save.csv", index=False, mode='a')
-
+    if refactor:
+        all_csvs = [pd.read_csv(output_path + "\Ref\\" + file) for file in os.listdir(output_path + "\Ref") if file.endswith(".csv")]
+        rdf = pd.concat(all_csvs, ignore_index=True)
+        rdf.to_csv(output_path + "\Ref" + "/to_save.csv", index=False, mode='a')
 
 def projects_analysis(base_path='../input/projects', output_path='../output/projects_analysis',resume=False,refactor=False):
     start = time.time()
@@ -189,6 +196,8 @@ def main(args):
 
         analyze_project(args.input, args.output, refactor)
     merge_results(args.output, args.output+"/overview")
+    if refactor:
+        merge_results(args.output + "/Ref", args.output + "/R_overview")
 
 
 
