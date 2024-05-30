@@ -31,6 +31,28 @@ def merge_results(input_dir="../output", output_dir="../general_output"):
     else:
         print("Error.")
 
+def merge_refactor_results(input_dir="../output", output_dir="../general_output"):
+    dataframes = []
+    for subdir, dirs, files in os.walk(input_dir):
+        if "R_to_save.csv" in files:
+            df = pd.read_csv(os.path.join(subdir, "R_to_save.csv"))
+            if len(df) > 0:
+                dataframes.append(df)
+
+    if dataframes:
+        combined_df = pd.concat(dataframes)
+        #rimuovi tutti le linee contenti filename,function_name,smell,name_smell,message tranne la prima
+        combined_df = combined_df[combined_df["filename"] != "filename"]
+        combined_df = combined_df.reset_index()
+
+
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+
+        combined_df.to_csv(os.path.join(output_dir, "overview_output.csv"), index=False)
+    else:
+        print("Error.")
+
 
 def find_python_files(url):
     try:
@@ -69,6 +91,7 @@ def get_python_files(path):
 def analyze_project(project_path, output_path=".", refactor=False):
     col = ["filename", "function_name", "smell", "name_smell", "message"]
     to_save = pd.DataFrame(columns=col)
+    empty_save = pd.DataFrame(columns=col)
     
     print("PATH OTTENUTO: " +project_path)
     
@@ -106,9 +129,12 @@ def analyze_project(project_path, output_path=".", refactor=False):
 
     to_save.to_csv(output_path + "/to_save.csv", index=False, mode='a')
     if refactor:
-        all_csvs = [pd.read_csv(output_path + "\Ref\\" + file) for file in os.listdir(output_path + "\Ref") if file.endswith(".csv")]
-        rdf = pd.concat(all_csvs, ignore_index=True)
-        rdf.to_csv(output_path + "\Ref" + "/to_save.csv", index=False, mode='a')
+        if len(os.listdir(output_path + "\Ref")) != 0:
+            all_csvs = [pd.read_csv(output_path + "\Ref\\" + file) for file in os.listdir(output_path + "\Ref") if file.endswith(".csv")]
+            rdf = pd.concat(all_csvs, ignore_index=True)
+            rdf.to_csv(output_path + "\Ref" + "/R_to_save.csv", index=False, mode='a')
+        else:
+            empty_save.to_csv(output_path + "\Ref" + "/R_to_save.csv", index=False, mode='a')   
 
 def projects_analysis(base_path='../input/projects', output_path='../output/projects_analysis',resume=False,refactor=False):
     start = time.time()
@@ -197,7 +223,7 @@ def main(args):
         analyze_project(args.input, args.output, refactor)
     merge_results(args.output, args.output+"/overview")
     if refactor:
-        merge_results(args.output + "/Ref", args.output + "/R_overview")
+        merge_refactor_results(args.output, args.output + "/R_overview")
 
 
 
