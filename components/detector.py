@@ -19,22 +19,22 @@ from cs_detector.refactor_rules.Generic import (
 
 def rule_check(source, node, libraries, filename, df_output,models,output_path, refactor):
         
-    print("Entrato in rule check")    
+    #print("Entrato in rule check")    
     
     #create dictionaries and libraries useful for detection
     dataframe_path = os.path.abspath("../obj_dictionaries/dataframes.csv")
     
-    print("Ottenuto dataframe")
+    #print("Ottenuto dataframe")
     
     print(dataframe_path)
     
     df_dict = load_dataframe_dict(dataframe_path)
     
-    print("Caricato dataframe")
+    #print("Caricato dataframe")
     
     tensor_dict = load_tensor_operations_dict()
     line_offset = 0 #indica spostamento di riga dovuto ad aggiunta da refactor precedente
-    print("Prima di detection")
+    #print("Prima di detection")
     
     #start detection
     deterministic, deterministic_list = deterministic_algorithm_option_not_used(libraries, filename, node)
@@ -125,7 +125,7 @@ def rule_check(source, node, libraries, filename, df_output,models,output_path, 
         if refactor: #//Qui bisogna mettere funzione per il refactoring
             R_gradients, R_gradients_list = R_gradients_not_cleared_before_backward_propagation(source, libraries, filename, node)
             line_offset = line_offset + 1
-            print("AUMENTATO IN GRADIENTS")
+            #print("AUMENTATO IN GRADIENTS")
             df_output.loc[len(df_output)] = R_gradients
             save_refactor_single_file(filename, R_gradients_list,output_path)
 
@@ -135,12 +135,12 @@ def rule_check(source, node, libraries, filename, df_output,models,output_path, 
         
         if refactor: #Qui bisogna mettere funzione per il refactoring
             if line_offset != 0:
-                print("AUMENTATO")
+                #print("AUMENTATO")
                 ast.increment_lineno(node, line_offset)
             R_tensor, R_tensor_list = R_tensor_array_not_used(source, libraries, filename, node)
             df_output.loc[len(df_output)] = R_tensor
             save_refactor_single_file(filename, R_tensor_list,output_path)
-            print("LINENO" + str(node.lineno))
+            #print("LINENO" + str(node.lineno))
         
         df_output.loc[len(df_output)] = tensor
         save_single_file(filename, tensor_list,output_path)
@@ -164,7 +164,7 @@ def rule_check(source, node, libraries, filename, df_output,models,output_path, 
  #   if hyper_parameters:
   #      df_output.loc[len(df_output)] = hyper_parameters
   
-    print("RESTITUISCO OUTPUT")
+    #print("RESTITUISCO OUTPUT")
 
     return df_output, line_offset
 def save_single_file(filename, smell_list,output_path):
@@ -179,12 +179,12 @@ def save_single_file(filename, smell_list,output_path):
     to_save.to_csv(f'{output_path}/{smell_name}.csv', index=False)
 def inspect(filename, output_path, refactor):
     
-    print("Entrato in inspect")
+    #print("Entrato in inspect")
     
     col = ["filename", "function_name", "smell", "name_smell", "message"]
     to_save = pd.DataFrame(columns=col)
         
-    print("Prima di file path")    
+    #print("Prima di file path")    
     
     file_path = os.path.join(filename)
     try:
@@ -195,7 +195,7 @@ def inspect(filename, output_path, refactor):
         raise FileNotFoundError(message)
     try:
         
-        print("Prima di tree")
+        #print("Prima di tree")
         
         sourceJoined = ''.join(source)
         tree = ast.parse(sourceJoined)

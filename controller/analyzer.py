@@ -90,24 +90,25 @@ def get_python_files(path):
 
 def analyze_project(project_path, output_path=".", refactor=False):
     col = ["filename", "function_name", "smell", "name_smell", "message"]
+    r_col = ["filename", "function_name", "smell_name", "line"]
     to_save = pd.DataFrame(columns=col)
-    empty_save = pd.DataFrame(columns=col)
+    empty_save = pd.DataFrame(columns=r_col)
     
-    print("PATH OTTENUTO: " +project_path)
+    #print("PATH OTTENUTO: " +project_path)
     
     filenames = get_python_files(project_path)
     if refactor:
         if not os.path.exists(output_path + "\Ref"):
             os.makedirs(output_path + "\Ref")
     
-    print("Ottenuti filename")
+    #print("Ottenuti filename")
     
-    print(filenames)
+    #print(filenames)
     
     for filename in filenames:
         if "tests/" not in filename:  # ignore test files
             try:
-                print("Prima di detector inspect")
+                #print("Prima di detector inspect")
                 result = detector.inspect(filename, output_path, refactor)
                 to_save = to_save.merge(result, how='outer')
             except SyntaxError as e:
@@ -144,7 +145,7 @@ def projects_analysis(base_path='../input/projects', output_path='../output/proj
     if not os.path.exists("../config/execution_log.txt"):
         #get abs path of execution_log.txt
         execution_log_path = os.path.abspath("../config/execution_log.txt")
-        print("Path:"+execution_log_path)
+        #print("Path:"+execution_log_path)
         open("../config/execution_log.txt", "w").close()
         resume = False
     execution_log = open("../config/execution_log.txt", "a")

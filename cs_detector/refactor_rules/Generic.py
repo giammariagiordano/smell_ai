@@ -77,12 +77,12 @@ def R_empty_column_misinitialization(source, libraries, filename, fun_node, df_d
                                 
                                 #print(ast.dump(node))
                                 oldCode = astunparse.unparse(node.value).strip()
-                                print(oldCode)
+                                #print(oldCode)
                                 #print(astunparse.unparse(node.left).strip())
                                 #node.targets[1].value = 'np.nan()'
                                 #print(ast.dump(node))
                                 newCode = 'np.nan()'
-                                print(newCode)
+                                #print(newCode)
                                 
                                 filePatch(filename, source, node.lineno, oldCode, newCode)
 
@@ -132,12 +132,12 @@ def R_nan_equivalence_comparison_misused(source, libraries, filename, fun_node):
                             
                             #print(ast.dump(node))
                             oldCode = astunparse.unparse(node).strip()[1:-1]
-                            print(oldCode)
+                            #print(oldCode)
                             #print(astunparse.unparse(node.left).strip())
                             #node.func.attr = 'net'
                             #print(ast.dump(node))
                             newCode = "np.isnan(" + compName + ")"
-                            print(newCode)
+                            #print(newCode)
                             
                             filePatch(filename, source, node.lineno, oldCode, newCode)
                             
