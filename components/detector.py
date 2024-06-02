@@ -26,7 +26,7 @@ def rule_check(source, node, libraries, filename, df_output,models,output_path, 
     
     #print("Ottenuto dataframe")
     
-    print(dataframe_path)
+    #print(dataframe_path)
     
     df_dict = load_dataframe_dict(dataframe_path)
     
