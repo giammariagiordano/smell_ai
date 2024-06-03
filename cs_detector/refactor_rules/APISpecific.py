@@ -15,7 +15,7 @@ def filePatch(filename, source, lineno, oldCode, newCode):
     #print("dentro filePatch")
     
     file_path = os.path.join(filename)
-    out = open(file_path, 'w')
+    out = open(file_path, 'w', encoding="utf-8")
 
     line = source[lineno - 1]
     line = line.replace(oldCode, newCode)
@@ -26,7 +26,7 @@ def filePatch(filename, source, lineno, oldCode, newCode):
     
 def addLine(filename, source, lineno, newCode):
     file_path = os.path.join(filename)
-    out = open(file_path, 'w')
+    out = open(file_path, 'w', encoding="utf-8")
 
     line = source[lineno]
     #print("RIGA CHE VOGLIO COPIARE:" + line)

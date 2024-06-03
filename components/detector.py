@@ -188,7 +188,7 @@ def inspect(filename, output_path, refactor):
     
     file_path = os.path.join(filename)
     try:
-        with open(file_path, "r") as file:
+        with open(file_path, "r", encoding="utf-8") as file:
             source = file.readlines()
     except FileNotFoundError as e:
         message = f"Error in file {filename}: {e}"
