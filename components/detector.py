@@ -216,8 +216,9 @@ def inspect(filename, output_path, refactor):
     return to_save
 def save_refactor_single_file(filename, smell_list,output_path):
     cols = ["filename", "function_name", "smell_name", "line"]
-    if os.path.exists(f'{output_path}/ R_{smell_list[0]["smell_name"]}.csv'):
-        to_save = pd.read_csv(f'{output_path}/ R_{smell_list[0]["smell_name"]}.csv')
+    if os.path.exists(f'{output_path}/Ref/R_{smell_list[0]["smell_name"]}.csv'):
+        to_save = pd.read_csv(f'{output_path}/Ref/R_{smell_list[0]["smell_name"]}.csv')
+        print("AGGIUNGO A CSV PREESISTENTE")
     else:
         to_save = pd.DataFrame(columns=cols)
     for smell in smell_list:
