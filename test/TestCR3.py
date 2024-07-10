@@ -20,12 +20,51 @@ def parse():
 
 class TestCR3:
         
-    def test_RA_1(self, parse):
-        args = parse.parse_args(["--input", "C:/Users/Utente/CodeSmile/smell_ai/input/projects", "--output",  "C:/Users/Utente/CodeSmile/smell_ai/output/projects_analysis", "--refactor"])
+    def test_RA_1(self, parse, tmp_path):
+        tempOutput = tmp_path / "output"
+        tempDir = tmp_path / "project"
+        args = parse.parse_args(["--input", str(tempDir), "--output", str(tempOutput), "--refactor"])
         assert args.refactor is True
         
-    def test_RM_1_1(self, parse, tmp_path):    
+    def test_RM_1_1(self, parse, tmp_path):
         tempOutput = tmp_path / "output"
+        tempDir = tmp_path / "project"
+        args = parse.parse_args(["--input", str(tempDir), "--output", str(tempOutput), "--refactor"])
+        with pytest.raises(SystemExit) as error:
+            analyzer.main(args)
+        assert error.value.code == 2
+                
+    def test_RM_1_2(self, parse, tmp_path):
+        tempOutput = tmp_path / "output"
+        tempDir = tmp_path / "project"
+        tempDir.mkdir()
+        args = parse.parse_args(["--input", str(tempDir), "--output", str(tempOutput), "--refactor"])
+        with pytest.raises(SystemExit) as error:
+            analyzer.main(args)
+        assert error.value.code == 3
+        
+    def test_RM_1_3(self, parse, tmp_path):
+        tempOutput = tmp_path / "output"
+        tempOutput.mkdir()
+        tempDir = tmp_path / "project"
+        args = parse.parse_args(["--input", str(tempDir), "--output", str(tempOutput), "--refactor"])
+        with pytest.raises(SystemExit) as error:
+            analyzer.main(args)
+        assert error.value.code == 2   
+        
+    def test_RM_1_4(self, parse, tmp_path):
+        tempOutput = tmp_path / "output"
+        tempOutput.mkdir()
+        tempDir = tmp_path / "project"
+        tempDir.mkdir()
+        args = parse.parse_args(["--input", str(tempDir), "--output", str(tempOutput), "--refactor"])
+        analyzer.main(args)  
+        fullpath = os.path.join(str(tempOutput), os.path.basename(os.path.normpath(args.input)))
+        assert not (os.path.exists(str(fullpath) + "/1/to_save.csv")) #In tal caso, è avvenuto return per assenza di file.
+        
+    def test_RM_1_5(self, parse, tmp_path):    
+        tempOutput = tmp_path / "output"
+        tempOutput.mkdir()
         tempDir = tmp_path / "project/project1"
         tempDir.parent.mkdir()
         tempDir.mkdir()
@@ -35,12 +74,14 @@ class TestCR3:
         args = parse.parse_args(["--input", str(tempDir), "--output", str(tempOutput), "--refactor"])
         analyzer.main(args)
         
-        assert ((os.path.exists(str(tempOutput) + "/Ref/R_to_save.csv")) and not (os.path.exists(tempOutput / "R_overview"/ "overview_output.csv")))
+        fullpath = os.path.join(str(tempOutput), os.path.basename(os.path.normpath(args.input)))
+        assert ((os.path.exists(str(fullpath) + "/1/Ref/R_to_save.csv")) and not (os.path.exists(tempOutput / "R_overview"/ "overview_output.csv")))
 
 
         
-    def test_RM_1_2(self, parse, tmp_path):    
+    def test_RM_1_6(self, parse, tmp_path):    
         tempOutput = tmp_path / "output"
+        tempOutput.mkdir()
         tempDir = tmp_path / "project/project1"
         tempDir.parent.mkdir()
         tempDir.mkdir()
@@ -61,8 +102,9 @@ class TestCR3:
             else:
                 assert False
     
-    def test_RM_1_3(self, parse, tmp_path):    
+    def test_RM_1_7(self, parse, tmp_path):    
         tempOutput = tmp_path / "output"
+        tempOutput.mkdir()
         tempDir = tmp_path / "project/project1"
         tempDir.parent.mkdir()
         tempDir.mkdir()
@@ -72,15 +114,17 @@ class TestCR3:
         args = parse.parse_args(["--input", str(tempDir), "--output", str(tempOutput), "--refactor"])
         analyzer.main(args)
         
+        fullpath = os.path.join(str(tempOutput), os.path.basename(os.path.normpath(args.input)))
         with open(str(tempFile), "r", encoding="utf-8") as file:
             source = file.readlines()
             if "net" in source[7]:
-                assert ((os.path.exists(str(tempOutput) + "/Ref/R_to_save.csv")) and (os.path.exists(tempOutput / "R_overview"/ "overview_output.csv")))
+                assert ((os.path.exists(str(fullpath) + "/1/Ref/R_to_save.csv")) and (os.path.exists(tempOutput / "R_overview"/ "overview_output.csv")))
             else:
                 assert False
     
-    def test_RM_1_4(self, parse, tmp_path):    
+    def test_RM_1_8(self, parse, tmp_path):    
         tempOutput = tmp_path / "output"
+        tempOutput.mkdir()
         tempDir = tmp_path / "project/project1"
         tempDir.parent.mkdir()
         tempDir.mkdir()
@@ -103,8 +147,9 @@ class TestCR3:
             else:
                 assert False
                 
-    def test_RM_1_5(self, parse, tmp_path):    
+    def test_RM_1_9(self, parse, tmp_path):    
         tempOutput = tmp_path / "output"
+        tempOutput.mkdir()
         tempDir = tmp_path / "project/project1"
         tempDir.parent.mkdir()
         tempDir.mkdir()
@@ -122,8 +167,9 @@ class TestCR3:
             else:
                 assert False
     
-    def test_RM_1_6(self, parse, tmp_path):    
+    def test_RM_1_10(self, parse, tmp_path):    
         tempOutput = tmp_path / "output"
+        tempOutput.mkdir()
         tempDir = tmp_path / "project/project1"
         tempDir.parent.mkdir()
         tempDir.mkdir()
@@ -149,8 +195,45 @@ class TestCR3:
                 assert False
     
     def test_RC_1_1(self, parse, tmp_path):
+        tempOutput = tmp_path / "output"
+        tempDir = tmp_path / "project"
+        args = parse.parse_args(["--input", str(tempDir), "--output", str(tempOutput), "--refactor"])
+        with pytest.raises(SystemExit) as error:
+            analyzer.main(args)
+        assert error.value.code == 2
+                
+    def test_RC_1_2(self, parse, tmp_path):
+        tempOutput = tmp_path / "output"
+        tempDir = tmp_path / "project"
+        tempDir.mkdir()
+        args = parse.parse_args(["--input", str(tempDir), "--output", str(tempOutput), "--refactor"])
+        with pytest.raises(SystemExit) as error:
+            analyzer.main(args)
+        assert error.value.code == 3
+        
+    def test_RC_1_3(self, parse, tmp_path):
+        tempOutput = tmp_path / "output"
+        tempOutput.mkdir()
+        tempDir = tmp_path / "project"
+        args = parse.parse_args(["--input", str(tempDir), "--output", str(tempOutput), "--refactor"])
+        with pytest.raises(SystemExit) as error:
+            analyzer.main(args)
+        assert error.value.code == 2   
+        
+    def test_RC_1_4(self, parse, tmp_path):
+        tempOutput = tmp_path / "output"
+        tempOutput.mkdir()
+        tempDir = tmp_path / "project"
+        tempDir.mkdir()
+        args = parse.parse_args(["--input", str(tempDir), "--output", str(tempOutput), "--refactor"])
+        analyzer.main(args)  
+        fullpath = os.path.join(str(tempOutput), os.path.basename(os.path.normpath(args.input)))
+        assert not (os.path.exists(str(fullpath) + "/1/to_save.csv")) #In tal caso, è avvenuto return per assenza di file.
+    
+    def test_RC_1_5(self, parse, tmp_path):
         
         tempOutput = tmp_path / "output"
+        tempOutput.mkdir()
         tempDir = tmp_path / "project/project1"
         tempDir.parent.mkdir()
         tempDir.mkdir()
@@ -165,9 +248,10 @@ class TestCR3:
                 source2 = file2.readlines()
                 assert set(source1) == set(source2)
                 
-    def test_RC_1_2(self, parse, tmp_path):
+    def test_RC_1_6(self, parse, tmp_path):
         
         tempOutput = tmp_path / "output"
+        tempOutput.mkdir()
         tempDir = tmp_path / "project/project1"
         tempDir.parent.mkdir()
         tempDir.mkdir()
@@ -180,8 +264,9 @@ class TestCR3:
             source = file.readlines()
             assert "net" in source[7]
     
-    def test_RC_1_3(self, parse, tmp_path):
+    def test_RC_1_7(self, parse, tmp_path):
         tempOutput = tmp_path / "output"
+        tempOutput.mkdir()
         tempDir = tmp_path / "project/project1"
         tempDir.parent.mkdir()
         tempDir.mkdir()
@@ -199,9 +284,47 @@ class TestCR3:
                 source2 = file2.readlines()
                 assert("to_numpy" in source2[196] and "np.nan" in source2[129] and "np.nan" in source2[130] and "zero_grad" in source2[146] and "np.matmul" in source2[186] and "np.isnan" in source2[124] and "net" in source2[166] and "tf.TensorArray" in source2[174] and "net" in source1[7])
     
-    def test_RS_1_1(self, parse, tmp_path):  
+    def test_RS_1_1(self, parse, tmp_path):
+        tempOutput = tmp_path / "output"
+        tempDir = tmp_path / "project"
+        args = parse.parse_args(["--input", str(tempDir), "--output", str(tempOutput), "--refactor"])
+        with pytest.raises(SystemExit) as error:
+            analyzer.main(args)
+        assert error.value.code == 2
+                
+    def test_RS_1_2(self, parse, tmp_path):
+        tempOutput = tmp_path / "output"
+        tempDir = tmp_path / "project"
+        tempDir.mkdir()
+        args = parse.parse_args(["--input", str(tempDir), "--output", str(tempOutput), "--refactor"])
+        with pytest.raises(SystemExit) as error:
+            analyzer.main(args)
+        assert error.value.code == 3
+        
+    def test_RS_1_3(self, parse, tmp_path):
+        tempOutput = tmp_path / "output"
+        tempOutput.mkdir()
+        tempDir = tmp_path / "project"
+        args = parse.parse_args(["--input", str(tempDir), "--output", str(tempOutput), "--refactor"])
+        with pytest.raises(SystemExit) as error:
+            analyzer.main(args)
+        assert error.value.code == 2   
+        
+    def test_RS_1_4(self, parse, tmp_path):
+        tempOutput = tmp_path / "output"
+        tempOutput.mkdir()
+        tempDir = tmp_path / "project"
+        tempDir.mkdir()
+        args = parse.parse_args(["--input", str(tempDir), "--output", str(tempOutput), "--refactor"])
+        analyzer.main(args)  
+        fullpath = os.path.join(str(tempOutput), os.path.basename(os.path.normpath(args.input)))
+        assert not (os.path.exists(str(fullpath) + "/1/to_save.csv")) #In tal caso, è avvenuto return per assenza di file.
+    
+    
+    def test_RS_1_5(self, parse, tmp_path):  
            
         tempOutput = tmp_path / "output"
+        tempOutput.mkdir()
         tempDir = tmp_path / "project/project1"
         tempDir.parent.mkdir()
         tempDir.mkdir()
@@ -210,17 +333,19 @@ class TestCR3:
         shutil.copyfile(originalFile, tempFile)        
         args = parse.parse_args(["--input", str(tempDir), "--output", str(tempOutput), "--refactor"])
         analyzer.main(args)
-        if((os.path.exists(str(tempOutput) + "/Ref/R_to_save.csv")) and not (os.path.exists(str(tempOutput) + "/R_overview"))):
-            df = pandas.read_csv(str(tempOutput) + "/Ref/R_to_save.csv")
+        fullpath = os.path.join(str(tempOutput), os.path.basename(os.path.normpath(args.input)))
+        if((os.path.exists(str(fullpath) + "/1/Ref/R_to_save.csv")) and not (os.path.exists(str(tempOutput) + "/R_overview"))):
+            df = pandas.read_csv(str(fullpath) + "/1/Ref/R_to_save.csv")
             oracle = {'filename': {}, 'function_name': {}, 'smell_name': {}, 'line': {}
             }
             assert df.to_dict() == oracle
         else:
             assert False
             
-    def test_RS_1_2(self, parse, tmp_path):  
+    def test_RS_1_6(self, parse, tmp_path):  
            
         tempOutput = tmp_path / "output"
+        tempOutput.mkdir()
         tempDir = tmp_path / "project/project1"
         tempDir.parent.mkdir()
         tempDir.mkdir()
@@ -229,8 +354,9 @@ class TestCR3:
         shutil.copyfile(originalFile, tempFile)        
         args = parse.parse_args(["--input", str(tempDir), "--output", str(tempOutput), "--refactor"])
         analyzer.main(args)
-        if((os.path.exists(str(tempOutput) + "/Ref/R_to_save.csv")) and (os.path.exists(str(tempOutput) + "/R_overview"))):
-            df = pandas.read_csv(str(tempOutput) + "/Ref/R_to_save.csv")
+        fullpath = os.path.join(str(tempOutput), os.path.basename(os.path.normpath(args.input)))
+        if((os.path.exists(str(fullpath) + "/1/Ref/R_to_save.csv")) and (os.path.exists(str(tempOutput) + "/R_overview"))):
+            df = pandas.read_csv(str(fullpath) + "/1/Ref/R_to_save.csv")
             oracle = {'filename': {0: str(tempFile), 1: str(tempFile)}, 'function_name': {0: "newFunction", 1: "newFunction"}, 'smell_name': {0: "pytorch_call_method_misused", 1: "pytorch_call_method_misused"}, 'line': {0: 8, 1: 8}
             }
             
@@ -241,9 +367,10 @@ class TestCR3:
         else:
             assert False
             
-    def test_RS_1_3(self, parse, tmp_path):  
+    def test_RS_1_7(self, parse, tmp_path):  
            
         tempOutput = tmp_path / "output"
+        tempOutput.mkdir()
         tempDir = tmp_path / "project/project1"
         tempDir.parent.mkdir()
         tempDir.mkdir()
@@ -255,8 +382,9 @@ class TestCR3:
         shutil.copyfile(originalFile2, tempFile2)        
         args = parse.parse_args(["--input", str(tempDir), "--output", str(tempOutput), "--refactor"])
         analyzer.main(args)
-        if((os.path.exists(str(tempOutput) + "/Ref/R_to_save.csv")) and (os.path.exists(str(tempOutput) + "/R_overview"))):
-            df = pandas.read_csv(str(tempOutput) + "/Ref/R_to_save.csv")
+        fullpath = os.path.join(str(tempOutput), os.path.basename(os.path.normpath(args.input)))
+        if((os.path.exists(str(fullpath) + "/1/Ref/R_to_save.csv")) and (os.path.exists(str(tempOutput) + "/R_overview"))):
+            df = pandas.read_csv(str(fullpath) + "/1/Ref/R_to_save.csv")
             oracle = {'filename': {0: str(tempFile2), 1: str(tempFile2), 2: str(tempFile2), 3: str(tempFile2), 4: str(tempFile2), 5: str(tempFile2), 6: str(tempFile2), 7: str(tempFile2), 8: str(tempFile1), 9: str(tempFile1), 10: str(tempFile2)}, 
             'function_name': {0: "dataframe_conversion_api_misused_example", 1: "empty_example", 2: "empty_example", 3: "gradient_not_cleared_before_backward_propagation" , 4: "matrix_mul_example", 5: "nan_equivalence_example2" , 6: "pytorch_call_method_misused_example2", 7: "pytorch_call_method_misused_example2", 8: "newFunction", 9: "newFunction", 10: "tensor_example"},
             'smell_name': {0: "dataframe_conversion_api_misused", 1: "empty_column_misinitialization", 2: "empty_column_misinitialization", 3: "gradients_not_cleared_before_backward_propagation" , 4: "matrix_multiplication_api_misused", 5: "nan_equivalence_comparison_misused" , 6: "pytorch_call_method_misused", 7: "pytorch_call_method_misused", 8: "pytorch_call_method_misused", 9: "pytorch_call_method_misused", 10: "tensor_array_not_used"},
