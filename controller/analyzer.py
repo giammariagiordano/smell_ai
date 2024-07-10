@@ -16,6 +16,7 @@ def merge_results(input_dir="../output", output_dir="../general_output"):
             df = pd.read_csv(os.path.join(subdir, "to_save.csv"))
             if len(df) > 0:
                 dataframes.append(df)
+                
 
     if dataframes:
         combined_df = pd.concat(dataframes)
@@ -52,8 +53,7 @@ def merge_refactor_results(input_dir="../output", output_dir="../general_output"
         combined_df.to_csv(os.path.join(output_dir, "overview_output.csv"), index=False)
     else:
         print("Error.")
-
-
+        
 def find_python_files(url):
     try:
         # Estraiamo il path della directory radice del progetto e lo salaviamo in 'root'
@@ -89,14 +89,21 @@ def get_python_files(path):
 
 
 def analyze_project(project_path, output_path=".", refactor=False):
+        
     col = ["filename", "function_name", "smell", "name_smell", "message"]
     r_col = ["filename", "function_name", "smell_name", "line"]
     to_save = pd.DataFrame(columns=col)
     empty_save = pd.DataFrame(columns=r_col)
     
+    
     #print("PATH OTTENUTO: " +project_path)
     
     filenames = get_python_files(project_path)
+    
+    if not any(File.endswith(".py") for File in filenames):
+        print(f"La cartella {project_path} non contiene alcun file analizzabile al suo interno. Inserisci un altro path in input.")
+        return
+    
     if refactor:
         if not os.path.exists(output_path + "\Ref"):
             os.makedirs(output_path + "\Ref")
@@ -111,6 +118,7 @@ def analyze_project(project_path, output_path=".", refactor=False):
                 #print("Prima di detector inspect")
                 result = detector.inspect(filename, output_path, refactor)
                 to_save = to_save.merge(result, how='outer')
+                
             except SyntaxError as e:
                 message = e.msg
                 error_path = output_path
@@ -135,7 +143,7 @@ def analyze_project(project_path, output_path=".", refactor=False):
             rdf = pd.concat(all_csvs, ignore_index=True)
             rdf.to_csv(output_path + "\Ref" + "/R_to_save.csv", index=False, mode='a')
         else:
-            empty_save.to_csv(output_path + "\Ref" + "/R_to_save.csv", index=False, mode='a')   
+            empty_save.to_csv(output_path + "\Ref" + "/R_to_save.csv", index=False, mode='a')
 
 def projects_analysis(base_path='../input/projects', output_path='../output/projects_analysis',resume=False,refactor=False):
     start = time.time()
@@ -161,7 +169,6 @@ def projects_analysis(base_path='../input/projects', output_path='../output/proj
         if not os.path.exists(f"{output_path}/{dirname}"):
             os.makedirs(f"{output_path}/{dirname}")
         print(f"Analyzing {dirname}...")
-
         analyze_project(new_path, f"{output_path}/{dirname}", refactor)
         print(f"{dirname} analyzed successfully.")
         execution_log.write(dirname + "\n")
@@ -204,7 +211,16 @@ def main(args):
 
     if args.input is None or args.output is None:
         print("Please specify input and output folders")
-        exit(0)
+        exit(1)
+        
+    if not os.path.isdir(args.input):
+        print(f"La cartella {args.input} non esiste. Inserisci un altro path in input.")
+        exit(2)
+
+    if not os.path.isdir(args.output):
+        print(f"La cartella {args.output} non esiste. Inserisci un altro path di output.")
+        exit(3)
+        
     resume = True
 
     multiple = args.multiple
@@ -221,11 +237,24 @@ def main(args):
             projects_analysis(args.input, args.output,resume, refactor)
     else:
 
-        analyze_project(args.input, args.output, refactor)
+        fullpath = os.path.join(args.output, os.path.basename(os.path.normpath(args.input)))
+        if not os.path.exists(fullpath):
+            os.makedirs(fullpath)
+            version = os.path.join(fullpath , "1")
+            os.makedirs(version)
+        else:
+            dirpath = os.listdir(fullpath)
+            lastversion = 0
+            for dirname in dirpath:
+                vernumber = int(dirname)
+                if vernumber > lastversion:
+                    lastversion = vernumber
+            version = os.path.join(fullpath,str(lastversion + 1))
+            os.makedirs(version)
+        analyze_project(args.input, version, refactor)
     merge_results(args.output, args.output+"/overview")
     if refactor:
         merge_refactor_results(args.output, args.output + "/R_overview")
-
 
 
 if __name__ == "__main__":
