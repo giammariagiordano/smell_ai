@@ -1,0 +1,11 @@
+{
+  "smells": [
+    {
+      "function_name": "myFunction",
+      "line": 10,
+      "description": "Long function",
+      "additional_info": "Refactor it!"
+    }
+  ],
+  "message": "Analysis completed."
+}

@@ -1,0 +1,69 @@
+version: "3.9"
+
+services:
+  # Gateway
+  gateway:
+    build:
+      context: ./webapp/gateway
+    ports:
+      - "8000:8000"
+    depends_on:
+      - ai_analysis_service
+      - static_analysis_service
+      - report_service
+    networks:
+      - code_smile_network
+    environment:
+      - AI_ANALYSIS_SERVICE=http://ai_analysis_service:8001
+      - STATIC_ANALYSIS_SERVICE=http://static_analysis_service:8002
+      - REPORT_SERVICE=http://report_service:8003
+
+  # AI Analysis Service
+  ai_analysis_service:
+    build:
+      context: ./webapp/services/aiservice
+    ports:
+      - "8001:8001"
+    networks:
+      - code_smile_network
+
+  # Static Analysis Service
+  static_analysis_service:
+    build:
+      context: ./webapp/services/staticanalysis
+    ports:
+      - "8002:8002"
+    networks:
+      - code_smile_network
+    volumes:
+      - ./components:/app/components
+      - ./code_extractor:/app/code_extractor
+      - ./detection_rules:/app/detection_rules
+      - ./obj_dictionaries:/app/obj_dictionaries
+
+  # Report Service
+  report_service:
+    build:
+      context: ./webapp/services/report
+    ports:
+      - "8003:8003"
+    networks:
+      - code_smile_network
+
+  # Frontend WebApp
+  webapp:
+    build:
+      context: ./webapp
+    ports:
+      - "3000:3000"
+    depends_on:
+      - gateway
+    networks:
+      - code_smile_network
+    environment:
+      - NEXT_PUBLIC_API_BASE_URL=http://localhost:8000/api
+
+# Networks
+networks:
+  code_smile_network:
+    driver: bridge

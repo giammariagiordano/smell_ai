@@ -1,4 +1,0 @@
-filename,function_name,smell_name,line,github_repo
-F:\projects\appleturicreate\src\external\xgboost\python-package\xgboost\sklearn.py,get_params,nan_equivalence_comparison_misused,129,apple/turicreate
-F:\projects\microsoftnni\examples\trials\kaggle-tgs-salt\utils.py,get_salt_existence,nan_equivalence_comparison_misused,85,microsoft/nni
-F:\projects\ConvLabConvLab\convlab\agent\__init__.py,update,nan_equivalence_comparison_misused,298,ConvLab/ConvLab

@@ -1,4 +1,0 @@
-filename,function_name,smell_name,line,github_repo
-F:\projects\cgre-aachengempy\gempy\core\xsolution.py,extract_each_surface_representations,unnecessary_iteration,99,cgre-aachen/gempy
-F:\projects\serengildeepface\deepface\commons\realtime.py,analysis,unnecessary_iteration,234,serengil/deepface
-F:\projects\cgre-aachengempy\gempy\core\xsolution.py,extract_each_surface_representations,unnecessary_iteration,99,cgre-aachen/gempy

@@ -1,0 +1,260 @@
+@startuml CodeSmileClassDiagram
+
+
+abstract class Smell {
+    - name: str
+    - description: str
+    + __init__(name: str, description: str)
+    + detect(ast_node: ast.AST, extracted_data: dict): list[dict]
+}
+
+class ChainIndexingSmell {
+    + __init__()
+    + detect(ast_node: ast.AST, extracted_data: dict): list[dict]
+}
+
+class DataFrameConversionAPIMisused {
+    + __init__()
+    + detect(ast_node: ast.AST, extracted_data: dict): list[dict]
+}
+
+class GradientsNotClearedSmell {
+    + __init__()
+    + detect(ast_node: ast.AST, extracted_data: dict): list[dict]
+}
+
+class MatrixMultiplicationAPIMisused {
+    + __init__()
+    + detect(ast_node: ast.AST, extracted_data: dict): list[dict]
+}
+
+class PyTorchCallMethodMisusedSmell {
+    + __init__()
+    + detect(ast_node: ast.AST, extracted_data: dict): list[dict]
+    - _get_base_name(node: ast.AST): str
+}
+
+class TensorArrayNotUsedSmell {
+    + __init__()
+    + detect(ast_node: ast.AST, extracted_data: dict): list[dict]
+    - _extract_tensor_names_from_concat(node: ast.Call): list[str]
+    - _is_in_loop(node: ast.AST, root_node: ast.AST): bool
+    - _find_parent_node(node: ast.AST, root_node: ast.AST): ast.AST
+}
+
+
+class BroadcastingFeatureNotUsedSmell {
+    + __init__()
+    + detect(ast_node: ast.AST, extracted_data: dict): list[dict]
+}
+
+class ColumnsAndDatatypeNotExplicitlySetSmell {
+    + __init__()
+    + detect(ast_node: ast.AST, extracted_data: dict): list[dict]
+}
+
+class DeterministicAlgorithmOptionSmell {
+    + __init__()
+    + detect(ast_node: ast.AST, extracted_data: dict): list[dict]
+    - _get_full_function_name(func: ast.AST, libraries: dict): str
+}
+
+class EmptyColumnMisinitializationSmell {
+    + __init__()
+    + detect(ast_node: ast.AST, extracted_data: dict): list[dict]
+}
+
+class HyperparametersNotExplicitlySetSmell {
+    + __init__()
+    + detect(ast_node: ast.AST, extracted_data: dict): list[dict]
+    - _get_full_function_name(func: ast.AST, libraries: dict): str
+}
+
+class InPlaceAPIsMisusedSmell {
+    + __init__()
+    + detect(ast_node: ast.AST, extracted_data: dict): list[dict]
+    - _is_assignment(node: ast.Call, root_node: ast.AST): bool
+}
+
+class MemoryNotFreedSmell {
+    + __init__()
+    + detect(ast_node: ast.AST, extracted_data: dict): list[dict]
+    - _is_model_defined_in_loop(loop_node, tensorflow_alias, model_methods): bool
+    - _is_memory_freed_in_loop(loop_node: ast.AST, tensorflow_alias: str): bool
+    - _is_nested_call(node: ast.Call, base: str, attributes: list[str]): bool
+}
+
+class MergeAPIParameterNotExplicitlySetSmell {
+    + __init__()
+    + detect(ast_node: ast.AST, extracted_data: dict): list[dict]
+}
+
+class NanEquivalenceComparisonMisusedSmell {
+    + __init__()
+    + detect(ast_node: ast.AST, extracted_data: dict): list[dict]
+    - _has_nan_comparison(node: ast.Compare, library_name: str): bool
+    - _is_nan(node: ast.AST, library_name: str): bool
+}
+
+class UnnecessaryIterationSmell {
+    + __init__()
+    + detect(ast_node: ast.AST, extracted_data: dict): list[dict]
+    - _is_dataframe(node: ast.AST, dataframe_variables: set[str]): bool
+    - _is_inefficient_iterable(node: ast.For, dataframe_variables: set[str], inefficient_methods: set[str]): bool
+    - _has_inefficient_operations(loop_node, dataframe_variables, inefficient_methods): ast.Call or None
+}
+
+
+' Classe Inspector
+class Inspector {
+    - output_path: str
+    + __init__(output_path: str, dataframe_dict_path: str, model_dict_path: str, tensor_dict_path: str)
+    + inspect(filename: str): pd.DataFrame
+    - _setup(dataframe_dict_path: str, model_dict_path: str, tensor_dict_path: str): void
+}
+
+
+class RuleChecker {
+    - output_path: str
+    - smells: list[Smell]
+    + __init__(output_path: str)
+    + rule_check(ast_node: ast.AST, extracted_data: dict, filename: str, function_name: str, df_output: pd.DataFrame): pd.DataFrame
+    - _setup_smells(): void
+}
+
+class DataFrameExtractor {
+    - df_methods: list[str]
+    + __init__(df_dict_path: str = None)
+    + load_dataframe_dict(path: str): void
+    + extract_dataframe_variables(fun_node: ast.AST, alias: str): list[str]
+    + track_dataframe_methods(fun_node: ast.AST, dataframe_vars: list[str]): dict[str, list[str]]
+    + track_dataframe_accesses(fun_node: ast.AST, dataframe_vars: list[str]): dict[str, list[str]]
+}
+
+class LibraryExtractor {
+    + extract_libraries(tree: ast.AST): list[dict[str, str]]
+    + get_library_aliases(libraries: list[dict[str, str]]): dict[str, str]
+    + get_library_of_node(node: ast.AST, aliases: dict[str, str]): str
+}
+
+class ModelExtractor {
+    - models_path: str
+    - tensors_path: str
+    - model_dict: dict[str, list] | None
+    - tensor_operations_dict: dict[str, list] | None
+    + __init__(models_path: str, tensors_path: str)
+    + load_model_dict(): dict[str, list]
+    + load_tensor_operations_dict(): dict[str, list]
+    + load_model_methods(): list[str]
+    + check_model_method(model: str, libraries: list[str]): bool
+}
+
+class VariableExtractor {
+    + extract_variable_definitions(fun_node: ast.AST): dict[str, ast.Assign]
+    + track_variable_usage(fun_node: ast.AST): dict[str, list[ast.Name]]
+}
+
+
+class FileUtils <<static>>{
+    {static} + clean_directory(base_path: str, folder_name: str)
+    {static} + get_python_files(directory: str) : list
+    {static} + initialize_log(log_path: str)
+    {static} + get_last_logged_project(log_path: str) : str
+    {static} + append_to_log(log_path: str, entry: str)
+    {static} + synchronized_append_to_log(log_path: str, entry: str, lock: Lock)
+    {static} + merge_results(input_dir: str, output_dir: str)
+}
+
+class ProjectAnalyzer {
+    - base_output_path: str
+    - output_path: str
+    - inspector: Inspector
+    + __init__(output_path: str)
+    + clean_output_directory()
+    - _save_results(df: DataFrame, filename: str)
+    + analyze_project(project_path: str) : int
+    + analyze_projects_sequential(base_path: str, resume: bool)
+    + analyze_projects_parallel(base_path: str, max_workers: int)
+    + merge_all_results()
+}
+
+class CodeSmileCLI {
+    - args: Namespace
+    - analyzer: ProjectAnalyzer
+    + __init__(args: Namespace)
+    + validate_args()
+    + execute()
+}
+
+class CodeSmellDetectorGUI {
+    - master: Tk
+    - project_analyzer: ProjectAnalyzer
+    - input_path: Label
+    - output_path: Label
+    - walker_picker: Spinbox
+    - parallel_var: BooleanVar
+    - resume_var: BooleanVar
+    - multiple_var: BooleanVar
+    - output_textbox: Text
+    + __init__(master: Tk)
+    + setup_gui()
+    + configure_stdout()
+    + disable_key_press(event)
+    + choose_input_path()
+    + choose_output_path()
+    + run_program()
+    + run_analysis(input_path, output_path, num_walkers, is_parallel, is_resume, is_multiple)
+}
+
+class CodeSmileGUI {
+    - root: Tk
+    - gui: CodeSmellDetectorGUI
+    + __init__()
+    + run()
+}
+
+class TextBoxRedirect {
+    - textbox: Text
+    + __init__(textbox: Text)
+    + write(text: str)
+    + flush()
+}
+
+
+
+Smell <|-- ChainIndexingSmell
+Smell <|-- DataFrameConversionAPIMisused
+Smell <|-- GradientsNotClearedSmell
+Smell <|-- MatrixMultiplicationAPIMisused
+Smell <|-- PyTorchCallMethodMisusedSmell
+Smell <|-- TensorArrayNotUsedSmell
+Smell <|-- BroadcastingFeatureNotUsedSmell
+Smell <|-- ColumnsAndDatatypeNotExplicitlySetSmell
+Smell <|-- DeterministicAlgorithmOptionSmell
+Smell <|-- EmptyColumnMisinitializationSmell
+Smell <|-- HyperparametersNotExplicitlySetSmell
+Smell <|-- InPlaceAPIsMisusedSmell
+Smell <|-- MemoryNotFreedSmell
+Smell <|-- MergeAPIParameterNotExplicitlySetSmell
+Smell <|-- NanEquivalenceComparisonMisusedSmell
+Smell <|-- UnnecessaryIterationSmell
+
+RuleChecker *-- Smell
+
+Inspector *-- LibraryExtractor
+Inspector *-- ModelExtractor
+Inspector *-- DataFrameExtractor
+Inspector *-- VariableExtractor
+Inspector *-- RuleChecker
+
+ProjectAnalyzer *-- Inspector
+FileUtils <.. ProjectAnalyzer 
+
+CodeSmileCLI *-- ProjectAnalyzer
+CodeSmellDetectorGUI *-- ProjectAnalyzer
+
+TextBoxRedirect <.. CodeSmellDetectorGUI
+CodeSmileGUI *-- CodeSmellDetectorGUI
+
+
+@enduml

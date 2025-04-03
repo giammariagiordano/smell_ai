@@ -1,9 +1,0 @@
-filename,function_name,smell_name,line,github_repo
-F:\projects\autoropedonkeycar\donkeycar\management\base.py,get_activations,memory_not_freed,390,autorope/donkeycar
-F:\projects\NeuromorphicProcessorProjectsnn_toolbox\snntoolbox\conversion\utils.py,get_activations_batch,memory_not_freed,390,NeuromorphicProcessorProject/snn_toolbox
-F:\projects\vanvalenlabdeepcell-tf\deepcell\utils\backbone_utils.py,get_backbone,memory_not_freed,472,vanvalenlab/deepcell-tf
-F:\projects\googleqkeras\qkeras\codebook.py,activation_compression,memory_not_freed,76,google/qkeras
-F:\projects\yzhao062pyod\pyod\models\mo_gaal.py,fit,memory_not_freed,131,yzhao062/pyod
-F:\projects\calicobasenji\bin\archive\basenji_hidden.py,main,memory_not_freed,130,calico/basenji
-F:\projects\googleqkeras\qkeras\codebook.py,two_tier_embedding_compression,memory_not_freed,187,google/qkeras
-F:\projects\googleqkeras\qkeras\codebook.py,weight_compression,memory_not_freed,139,google/qkeras
